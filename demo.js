@@ -53,7 +53,7 @@ export function createDemo(divId) {
 
     function initUI() {
       let spriteX = 0;
-      for (let c of '🦎😀💥👁🐠🦋🐞🕸🥨🎄🤖📚🎨🍎') {
+      for (let c of '🦎😀💥👁🐠🦋🐞🕸🥨🎄🤖📚🎨📤') {
         const div = document.createElement('div')
         div.id = c;
         div.style.backgroundPositionX = spriteX + 'px';
@@ -144,13 +144,49 @@ export function createDemo(divId) {
     }
 
     async function updateModel() {
-      const r = await fetch(`${modelDir}/${experiment}_${target}.json`);
-      const model = await r.json();
+      var model
+
+      var input = document.createElement('input');
+      input.type = 'file';
+
+      let promise = new Promise(function(resolve, reject) {
+
+          input.onchange = e => { 
+              var file = e.target.files[0]; 
+
+              var reader = new FileReader();
+              reader.readAsText(file,'UTF-8');
+
+              reader.onload = readerEvent => {
+                  var content = readerEvent.target.result; 
+                  model = JSON.parse( content );
+                  resolve();
+              }
+
+          }
+      });
+
+      if (target == "📤"){
+        console.log(target);
+
+        
+        async function wait_for_input() { 
+            input.click();
+            return promise;
+        }
+
+        await wait_for_input();
+        } 
+        else {
+          const r = await fetch(`${modelDir}/${experiment}_${target}.json`);
+          model = await r.json();
+        }
       if (!demo) {
         demo = createCA(gl, model, [W, H]);
         initUI();        
         requestAnimationFrame(render);
-      } else {
+      } 
+      else {
         demo.setWeights(model);
         //demo.reset();
       }
