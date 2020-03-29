@@ -53,7 +53,7 @@ export function createDemo(divId) {
 
     function initUI() {
       let spriteX = 0;
-      for (let c of '🦎😀💥👁🐠🦋🐞🕸🥨🎄🌍😷🦠🍎') {
+      for (let c of '🦎😀💥👁🐠🦋🐞🕸🥨🎄🤖📚🎨🍎') {
         const div = document.createElement('div')
         div.id = c;
         div.style.backgroundPositionX = spriteX + 'px';
