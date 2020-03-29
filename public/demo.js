@@ -15,13 +15,22 @@ export function createDemo(divId) {
   
     const W=96, H=96;
     let demo;
-    const modelDir = 'models';
-    let target = 'world';
-    let experiment = 'ex1';
+    const modelDir = 'webgl_models8';
+    let target = 'planarian';
+    let experiment = 'ex3';
     let paused = false;
 
     const canvas = $('#demo-canvas');
     const gl = canvas.getContext("webgl");
+	
+	// canvas color
+	var r = 1;
+	var g = 0;
+	var b = 0;
+	var a = 0;
+	gl.clearColor(1, g * a, b * a, 0.5);
+	gl.clear(gl.COLOR_BUFFER_BIT)
+
     canvas.width = W*6;
     canvas.height = H*6;
 
@@ -35,16 +44,16 @@ export function createDemo(divId) {
       $$('#model-hints span').forEach(e=>{
         e.style.display = e.id.startsWith(experiment) ? "inline" : "none";
       });
-      //$('#play').style.display = paused? "inline" : "none";
-      //$('#pause').style.display = !paused? "inline" : "none";
-      //const speed = parseInt($('#speed').value);
-      //$('#speedLabel').innerHTML = ['1/60 x', '1/10 x', '1/2 x', '1x', '2x', '4x', '<b>max</b>'][speed+3];
-      //$("#rotationLabel").innerText = $('#rotation').value + '°';
+      $('#play').style.display = paused? "inline" : "none";
+      $('#pause').style.display = !paused? "inline" : "none";
+      const speed = parseInt($('#speed').value);
+      $('#speedLabel').innerHTML = ['1/60 x', '1/10 x', '1/2 x', '1x', '2x', '4x', '<b>max</b>'][speed+3];
+      $("#rotationLabel").innerText = $('#rotation').value + '°';
     }
 
     function initUI() {
       let spriteX = 0;
-      for (let c of '🦎😀💥👁🐠🦋🐞🕸🥨🎄') {
+      for (let c of '🦎😀💥👁🐠🦋🐞🕸🥨🎄🌍😷🦠🍎') {
         const div = document.createElement('div')
         div.id = c;
         div.style.backgroundPositionX = spriteX + 'px';
@@ -53,23 +62,23 @@ export function createDemo(divId) {
           updateModel();
         }
         spriteX -= 40;
-        //$('#pattern-selector').appendChild(div);
+        $('#pattern-selector').appendChild(div);
       }
-      //$('#reset').onclick = demo.reset;
-      //$('#play-pause').onclick = ()=>{
-      //  paused = !paused;
-      //  updateUI();
-      //};
+      $('#reset').onclick = demo.reset;
+      $('#play-pause').onclick = ()=>{
+        paused = !paused;
+        updateUI();
+      };
       $$('#model-selector input').forEach(sel=>{
         sel.onchange = ()=>{
           experiment = sel.id;
           updateModel();
         }
       });
-      //$('#speed').onchange = updateUI;
-      //$('#speed').oninput = updateUI;
-      //$('#rotation').onchange = updateUI;
-      //$('#rotation').oninput = updateUI;
+      $('#speed').onchange = updateUI;
+      $('#speed').oninput = updateUI;
+      $('#rotation').onchange = updateUI;
+      $('#rotation').oninput = updateUI;
 
       function canvasToGrid(x, y) {
         const [w, h] = demo.gridSize;
@@ -90,7 +99,7 @@ export function createDemo(divId) {
       function click(pos) {
         const [x, y] = pos;
         if (doubleClick) {
-          demo.paint(x, y, 100, 'clear');
+          demo.paint(x, y, 1, 'seed');
           doubleClick = false;
           justSeeded = true;
           setTimeout(()=>{ justSeeded = false; }, 100);
@@ -99,13 +108,13 @@ export function createDemo(divId) {
           setTimeout(()=>{ 
             doubleClick = false; 
           }, 300);
-          demo.paint(x, y, 1, 'seed');
+          demo.paint(x, y, 8, 'clear');
         }
       }
       function move(pos) {
         const [x, y] = pos;
         if (!justSeeded) {
-          demo.paint(x, y, 1, 'seed');
+          demo.paint(x, y, 8, 'clear');
         }
       }
 
@@ -143,7 +152,7 @@ export function createDemo(divId) {
         requestAnimationFrame(render);
       } else {
         demo.setWeights(model);
-        demo.reset();
+        //demo.reset();
       }
       updateUI();
     }
@@ -160,12 +169,23 @@ export function createDemo(divId) {
       }
   
       if (!paused) {
-        //const speed = parseInt($("#speed").value);
+        const speed = parseInt($("#speed").value);
+        if (speed <= 0) {  // slow down by skipping steps
+          const skip = [1, 2, 10, 60][-speed];
+          stepsPerFrame = (frameCount % skip) ? 0 : 1;
+          frameCount += 1;
+        } else if (speed > 0) { // speed up by making more steps per frame
+          const interval = time - lastDrawTime;
+          stepsPerFrame += interval<20.0 ? 1 : -1;
+          stepsPerFrame = Math.max(1, stepsPerFrame);
+          stepsPerFrame = Math.min(stepsPerFrame, [1, 2, 4, Infinity][speed])
+        }
+        demo.setAngle($('#rotation').value);
         for (let i=0; i<stepsPerFrame; ++i) {
           demo.step();
         }
-        // $("#stepCount").innerText = demo.getStepCount();
-        //$("#ips").innerText = demo.fps();
+        $("#stepCount").innerText = demo.getStepCount();
+        $("#ips").innerText = demo.fps();
       }
       lastDrawTime = time;
 
